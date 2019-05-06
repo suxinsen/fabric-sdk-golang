@@ -1,0 +1,192 @@
+#
+# Copyright SecureKey Technologies Inc. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+#
+# The network connection profile provides client applications the information about the target
+# blockchain network that are necessary for the applications to interact with it. These are all
+# knowledge that must be acquired from out-of-band sources. This file provides such a source.
+#
+
+name: "global-trade-network"
+
+description: "The network that has all the configuration parameters"
+
+x-type: "h1fv1"
+
+#
+# Schema version of the content. Used by the SDK to apply the corresponding parsing rules.
+#
+version: 1.0.0
+
+#
+# The client section used by GO SDK.
+#
+client:
+
+  organization: org1
+
+  logging:
+    level: info
+  cryptoconfig:
+    path: ./crypto-config
+
+  credentialStore:
+    path: ./credential-store/
+
+    cryptoStore:
+      path: ./credential-store/msp
+
+  BCCSP:
+    security:
+     enabled: true
+     default:
+      provider: "SW"
+     hashAlgorithm: "SHA2"
+     softVerify: true
+     level: 256
+
+  tlsCerts:
+    systemCertPool: false
+    client:
+      key:
+        path:
+      cert:
+        path:
+
+channels:
+  mychannel:
+    peers:
+      peer0.org1.example.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer1.org1.example.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+    policies:
+      queryChannelConfig:
+        minResponses: 1
+        maxTargets: 1
+        retryOpts:
+          attempts: 5
+          initialBackoff: 500ms
+          maxBackoff: 5s
+          backoffFactor: 2.0
+      discovery:
+        maxTargets: 2
+        retryOpts:
+          attempts: 4
+          initialBackoff: 500ms
+          maxBackoff: 5s
+          backoffFactor: 2.0
+      eventService:
+        resolverStrategy: PreferOrg
+        balancer: Random
+        blockHeightLagThreshold: 5
+        reconnectBlockHeightLagThreshold: 10
+        peerMonitorPeriod: 5s
+
+organizations:
+  org1:
+    mspid: Org1MSP
+    cryptoPath: ./crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+    peers:
+      - peer0.org1.example.com
+      - peer1.org1.example.com
+    #adminPrivateKey:
+      #path: ${gopath}/src/github.com/hyperledger/device-data-server/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/8101f274b1a3085a231a125e03555200ce5ebe37a7e0bf6a35fcaf49f7067f94_sk
+    #signedCert:
+      #path: ${gopath}/src/github.com/hyperledger/device-data-server/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem
+    #certificateAuthorities:
+    #- ca.org1.example.com
+
+orderers:
+  orderer.example.com:
+    url: orderer.example.com:7050
+    grpcOptions:
+      ssl-target-name-override: orderer.example.com
+      keep-alive-time: 0s
+      keep-alive-timeout: 20s
+      keep-alive-permit: false
+      fail-fast: false
+      allow-insecure: false
+    tlsCACerts:
+      path: ./crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
+
+peers:
+  peer0.org1.example.com:
+    url: peer0.org1.example.com:7051
+    eventUrl: peer0.org1.example.com:7053
+    grpcOptions:
+      ssl-target-name-override: peer0.org1.example.com
+      keep-alive-time: 0s
+      keep-alive-timeout: 20s
+      keep-alive-permit: false
+      fail-fast: false
+      allow-insecure: false
+    tlsCACerts:
+      path: ./crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/server.crt
+  peer1.org1.example.com:
+    url: peer1.org1.example.com:8051
+    eventUrl: peer1.org1.example.com:7053
+    grpcOptions:
+      ssl-target-name-override: peer1.org1.example.com
+      keep-alive-time: 0s
+      keep-alive-timeout: 20s
+      keep-alive-permit: false
+      fail-fast: false
+      allow-insecure: false
+    tlsCACerts:
+      path: ./crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/server.crt
+
+
+#certificateAuthorities:
+#  ca.org1.example.com:
+#    url: http://ca.org1.example.com:7054
+#    tlsCACerts:
+#      # Certificate location absolute path
+#      path: src/main/resources/crypto-config/peerOrganizations/org1.example.com/ca/ca.org1.example.com-cert.pem
+#    registrar:
+#      enrollId: admin
+#      enrollSecret: adminpw
+#    caName: ca.org1.example.com
+#
+#  ca.org2.example.com:
+#    url: http://ca.org2.example.com:7054
+#    tlsCACerts:
+#      # Certificate location absolute path
+#      path: src/main/resources/crypto-config/peerOrganizations/org2.example.com/ca/ca.org2.example.com-cert.pem
+#    registrar:
+#      enrollId: admin
+#      enrollSecret: adminpw
+#    caName: ca.org2.example.com
+
+entityMatchers:
+  peer:
+    - pattern: (\w*)peer0.org1.example.com(\w*)
+      urlSubstitutionExp: 192.168.1.65:7051
+      eventUrlSubstitutionExp: http://192.168.1.65:7053
+      sslTargetOverrideUrlSubstitutionExp: peer0.org1.example.com
+      mappedHost: peer0.org1.example.com
+
+    - pattern: (\w*)peer1.org1.example.com(\w*)
+      urlSubstitutionExp: 192.168.1.65:8051
+      eventUrlSubstitutionExp: http://192.168.1.65:8053
+      sslTargetOverrideUrlSubstitutionExp: peer1.org1.example.com
+      mappedHost: peer1.org1.example.com
+
+  orderer:
+    - pattern: (\w*)orderer.example.com(\w*)
+      urlSubstitutionExp: 192.168.1.2:7050
+      sslTargetOverrideUrlSubstitutionExp: orderer.example.com
+      mappedHost: orderer.example.com
+
+#  certificateAuthorities:
+#    - pattern: (\w*)ca.org1.example.com(\w*)
+#      urlSubstitutionExp: https://192.168.1.65:7054
+#      mappedHost: ca.org1.example.com
